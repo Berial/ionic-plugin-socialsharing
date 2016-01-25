@@ -28,5 +28,14 @@
             <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
         </config-file>
         <source-file src="src/android/SocialSharing.java" target-dir="src/xyz/berial/socialsharing"/>
+        <source-file src="src/android/libs/MobCommons.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/MobTools.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-Core-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-QQ-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-ShortMessage-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-SinaWeibo-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-Wechat-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-Wechat-Core-2.6.6.jar" target-dir="libs"/>
+        <source-file src="src/android/libs/ShareSDK-Wechat-Moments-2.6.6.jar" target-dir="libs"/>
     </platform>
 </plugin>
