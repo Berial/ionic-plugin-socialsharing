@@ -7,12 +7,12 @@ import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 import cn.sharesdk.framework.Platform;
 import cn.sharesdk.framework.PlatformActionListener;
 import cn.sharesdk.framework.ShareSDK;
-import cn.sharesdk.onekeyshare.OnekeyShare;
 import cn.sharesdk.sina.weibo.SinaWeibo;
 import cn.sharesdk.system.text.ShortMessage;
 import cn.sharesdk.tencent.qq.QQ;
@@ -24,7 +24,7 @@ import cn.sharesdk.wechat.moments.WechatMoments;
  */
 public class SocialSharing extends CordovaPlugin {
 
-    private CallbackContext _callback;
+    private PlatformActionAdapter _listener;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -34,48 +34,89 @@ public class SocialSharing extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        _callback = callbackContext;
+        _listener = new PlatformActionAdapter(callbackContext);
         if ("shareWeibo".equals(action)) {
-            _share(SinaWeibo.NAME, args.getString(0));
+            _shareWeibo(args.getString(0));
+            return true;
         } else if ("shareQQ".equals(action)) {
-            _share(QQ.NAME, args.getString(0));
+            _shareQQ(args.getString(0));
+            return true;
         } else if ("shareWeixin".equals(action)) {
-            _share(Wechat.NAME, args.getString(0));
-        } else if ("shareWeixinMoment".equals(action)) {
-            _share(WechatMoments.NAME, args.getString(0));
+            _shareWechat(args.getString(0));
+            return true;
+        } else if ("shareWeixinMoments".equals(action)) {
+            _shareWechatMoments(args.getString(0));
+            return true;
         } else if ("shareSMS".equals(action)) {
-            _share(ShortMessage.NAME, args.getString(0));
+            _shareSMS(args.getString(0));
+            return true;
         }
         return false;
     }
 
-    private void _share(String platName, String message) {
-        OnekeyShare oks = new OnekeyShare();
-        oks.disableSSOWhenAuthorize();
-        oks.setPlatform(platName);
-        oks.setDialogMode();
-        oks.setText(message);
-        oks.setShareFromQQAuthSupport(false);
-        oks.setSite("幸福钱庄");
-        oks.setVenueName("幸福钱庄");
-        oks.setTitle("幸福钱庄");
-        oks.setCallback(new PlatformActionListener() {
+    private void _shareWechat(String message) {
+        Wechat wechat = (Wechat) ShareSDK.getPlatform(Wechat.NAME);
+        Wechat.ShareParams params = new Wechat.ShareParams();
+        params.setShareType(Platform.SHARE_TEXT);
+        params.setText(message);
+        wechat.setPlatformActionListener(_listener);
+        wechat.share(params);
+    }
 
-            @Override
-            public void onComplete(Platform platform, int i, HashMap<String, Object> hashMap) {
-                _callback.success(i);
-            }
+    private void _shareWechatMoments(String message) {
+        WechatMoments wechatMoments = (WechatMoments) ShareSDK.getPlatform(WechatMoments.NAME);
+        WechatMoments.ShareParams params = new WechatMoments.ShareParams();
+        params.setShareType(Platform.SHARE_TEXT);
+        params.setText(message);
+        wechatMoments.setPlatformActionListener(_listener);
+        wechatMoments.share(params);
+    }
 
-            @Override
-            public void onError(Platform platform, int i, Throwable throwable) {
-                _callback.error(i);
-            }
+    private void _shareQQ(String message) {
+        QQ qq = (QQ) ShareSDK.getPlatform(QQ.NAME);
+        QQ.ShareParams params = new QQ.ShareParams();
+        params.setText(message);
+        qq.setPlatformActionListener(_listener);
+        qq.share(params);
+    }
 
-            @Override
-            public void onCancel(Platform platform, int i) {
-                _callback.error(i);
-            }
-        });
-        oks.show(cordova.getActivity());
+    private void _shareWeibo(String message) {
+        SinaWeibo weibo = (SinaWeibo) ShareSDK.getPlatform(SinaWeibo.NAME);
+        SinaWeibo.ShareParams params = new SinaWeibo.ShareParams();
+        params.setText(message);
+        weibo.setPlatformActionListener(_listener);
+        weibo.share(params);
+    }
+
+    private void _shareSMS(String message) {
+        ShortMessage sms = (ShortMessage) ShareSDK.getPlatform(ShortMessage.NAME);
+        ShortMessage.ShareParams params = new ShortMessage.ShareParams();
+        params.setText(message);
+        sms.setPlatformActionListener(_listener);
+        sms.share(params);
+    }
+
+    private static class PlatformActionAdapter implements PlatformActionListener {
+
+        private WeakReference<CallbackContext> _callback;
+
+        PlatformActionAdapter(CallbackContext callbackContext) {
+            _callback = new WeakReference<CallbackContext>(callbackContext);
+        }
+
+        @Override
+        public void onComplete(Platform platform, int i, HashMap<String, Object> hashMap) {
+            _callback.get().success("success");
+        }
+
+        @Override
+        public void onError(Platform platform, int i, Throwable throwable) {
+            _callback.get().error("error");
+        }
+
+        @Override
+        public void onCancel(Platform platform, int i) {
+            _callback.get().error("cancel");
+        }
     }
 }
